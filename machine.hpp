@@ -23,7 +23,8 @@ private:
 
 
 #include "smachine.hpp"
-#include "rmachine.hpp"
+//TODO: Implement a register machine?  Maybe?  If ya wanna?
+//#include "rmachine.hpp"
 
 
 #endif//machine_hpp_2015_0714_1649
