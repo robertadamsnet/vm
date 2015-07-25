@@ -104,29 +104,39 @@ auto Lexer::inner_scan() -> Token
   };
 
   auto get_keyword = [&] {
-    if(symbol() == "push") {
+    auto sym = symbol();
+    if(sym == "push") {
       return kw_push;
     }
-    if(symbol() == "add") {
+    if(sym == "add") {
       return kw_add;
     }
-    if(symbol() == "div") {
+    if(sym == "div") {
       return kw_div;
     }
-    if(symbol() == "mul") {
+    if(sym == "mul") {
       return kw_mul;
     }
-    if(symbol() == "terminate") {
+    if(sym == "terminate") {
       return kw_terminate;
     }
-    if(symbol() == "dump") {
+    if(sym == "dump") {
       return kw_dump;
+    }
+    if(sym == "hex_dump") {
+      return kw_hex_dump;
+    }
+    if(sym == "jump") {
+      return kw_jump;
+    }
+    if(sym == "move") {
+      return kw_move;
     }
     return tk_identifier;
   };
 
   auto get_identifier = [&] {
-    while(isalnum(ch)) {
+    while(isalnum(ch) || ch == '_') {
       accept();
       peek();
     }
