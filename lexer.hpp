@@ -17,8 +17,11 @@ public:
     kw_div,
     kw_mul,
     kw_terminate,
-    kw_dump
-
+    kw_dump,
+    kw_hex_dump,
+    kw_jump,
+    kw_move,
+    TOKEN_MAX
   };
 
   typedef std::string string_t;
