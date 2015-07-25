@@ -167,11 +167,13 @@ auto Lexer::inner_scan() -> Token
       accept();
       return tk_semicolon;
     }
+    accept();
     return tk_literal;
   } 
   return tk_end_of_line;
 }
 
+inline
 auto Lexer::symbol() const -> string_t {
   return string_t(source(), start_, end_ - start_);
 }
