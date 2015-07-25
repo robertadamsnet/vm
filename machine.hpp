@@ -24,7 +24,9 @@ private:
 
 #include "smachine.hpp"
 //TODO: Implement a register machine?  Maybe?  If ya wanna?
-//#include "rmachine.hpp"
+//2015_07_24 Yeah, I kinda really want to.
+//
+#include "rmachine.hpp"
 
 
 #endif//machine_hpp_2015_0714_1649
