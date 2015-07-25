@@ -30,9 +30,9 @@ public:
 
   auto reset() -> void;
 
-  auto scan() -> Token;
+  auto scan() -> const Token&;
 
-  auto token() -> Token;
+  auto token() -> const Token&;
 
   auto set(const string_t&) -> void;
 
@@ -75,13 +75,15 @@ Lexer::Lexer(const string_t& s) : source_p_(&s)
   reset();
 }
 
-auto Lexer::scan() -> Token
+inline
+auto Lexer::scan() -> const Token&
 {
   token_ = inner_scan();
   return token_;
 }
 
-auto Lexer::inner_scan() -> Token 
+inline
+auto Lexer::inner_scan() -> Token
 {
   start_ = end_;
   int ch;
