@@ -2,6 +2,8 @@
 #define rparser_hpp_2015_0724_1357 
 
 #include "ast.hpp"
+#include "utils.hpp"
+
 #include <boost/lexical_cast.hpp>
 
 class RParser {
@@ -78,7 +80,7 @@ void RParser::parse(const string_t& s, std::function<string_t()> reload_fn)
     }
     expect_end();
     auto target_register = 
-      boost::lexical_cast<RegisterMachine::register_id_t>(lexer.symbol());
+      boost::lexical_cast<RegisterMachine::op_param_t>(lexer.symbol());
     
     RegisterMachine::move_instr_t instr;
     instr.record.op = RegisterMachine::Move;
@@ -94,20 +96,48 @@ void RParser::parse(const string_t& s, std::function<string_t()> reload_fn)
       throw err_expected_register_id();
     }
     auto source_register = 
-      boost::lexical_cast<RegisterMachine::register_id_t>(lexer.symbol());
+      boost::lexical_cast<RegisterMachine::op_param_t>(lexer.symbol());
 
     token = get_token();
     if(token_is_register()) {
       return parse_move_register_to_register(source_register);
-    } 
+    }
 
     throw err_unexpected_symbol("[move][reg][???] << ", lexer.symbol());
+  };
+
+  auto parse_move_number_to_register = [&] (auto number) {
+    auto token = get_token();
+    if(token == Lexer::tk_number) {
+      auto target_register = 
+        boost::lexical_cast<RegisterMachine::op_param_t>(lexer.symbol());
+      RegisterMachine::move_instr_t instr;
+      instr.record.op = RegisterMachine::Move;
+      instr.record.source = RegisterMachine::Code;
+      instr.record.target = target_register;
+      return std::make_unique<Instruction>(instr.word, number);    
+    }
+    throw err_unexpected_symbol("[move][num][%] << ", lexer.symbol());
+  };
+
+  auto parse_move_number = [&] {
+    auto number = boost::lexical_cast<word_t>(lexer.symbol());
+
+    auto token = get_token();
+    if(token_is_register()) {
+      return parse_move_number_to_register(number);
+    }
+
+    throw err_unexpected_symbol("[move][num][???] << ", lexer.symbol());
   };
 
   auto parse_move = [&] {
     auto token = get_token();
     if(token_is_register()) {
       return parse_move_register();
+    }
+    if(token == Lexer::tk_number) {
+      return parse_move_number();
     }
     throw err_unexpected_symbol("[move][???] << ", lexer.symbol());
   };
@@ -122,6 +152,66 @@ void RParser::parse(const string_t& s, std::function<string_t()> reload_fn)
     }
   }
 
+  auto parse_add_register_register = [&] (auto source_reg) {
+    auto token = get_token();
+    if(token != Lexer::tk_number) {
+      throw err_unexpected_symbol("[add][%reg][%???] << ", lexer.symbol());
+    }
+    auto target_reg = lexer.symbol_as<word_t>();
+    RegisterMachine::add_instr_t instr;
+    zerofill(instr);
+    instr.record.op = RegisterMachine::Add;
+    instr.record.source_reg = source_reg;
+    instr.record.target_reg = target_reg;
+    return std::make_unique<Instruction>(instr.word);
+  };
+
+  auto parse_add_register = [&] {
+    auto token = get_token();
+    if(token != Lexer::tk_number) {
+      throw err_unexpected_symbol("[add][%???] << ", lexer.symbol());
+    }
+    auto source_reg = lexer.symbol_as<word_t>(); 
+    token = get_token();
+    if(token_is_register()) {
+      return parse_add_register_register(source_reg);
+    }
+    throw err_unexpected_symbol("[add][%reg][???] << ", lexer.symbol());
+  };
+
+  auto parse_add_number_to_register = [&] (auto number) {
+    auto token = get_token();
+    if(token != Lexer::tk_number) {
+      throw err_unexpected_symbol("[add][n][%???] << ", lexer.symbol());
+    }
+    auto target_reg = lexer.symbol_as<RegisterMachine::op_param_t>();
+    RegisterMachine::register_instr_t instr;
+    zerofill(instr);
+    instr.record.op =     RegisterMachine::Add;
+    instr.record.source = RegisterMachine::Code;
+    instr.record.target = RegisterMachine::Register;
+    instr.record.target_reg = target_reg;
+    return std::make_unique<Instruction>(instr.word, number);
+  };
+
+  auto parse_add_number = [&] (auto number) {
+    auto token = get_token();
+    if(token_is_register()) {
+      return parse_add_number_to_register(number);
+    }
+    throw err_unexpected_symbol("[add][n][???] << ", lexer.symbol());
+  };
+  auto parse_add = [&] {
+    auto token = get_token();
+    if(token_is_register()) {
+      return parse_add_register();
+    }
+    if(token == Lexer::tk_number) {
+      auto number = lexer.symbol_as<word_t>();
+      return parse_add_number(number);
+    }
+    throw err_unexpected_symbol("[add][???] << ", lexer.symbol());
+  };
 
   switch(token) {
   case Lexer::kw_push:
@@ -132,8 +222,7 @@ void RParser::parse(const string_t& s, std::function<string_t()> reload_fn)
     }
     break;
   case Lexer::kw_add:
-    expect_end();
-    ast_ = std::make_unique<Instruction>(RegisterMachine::Add);
+    ast_ = parse_add();
     break;
   case Lexer::kw_div:
     expect_end();
@@ -157,6 +246,8 @@ void RParser::parse(const string_t& s, std::function<string_t()> reload_fn)
       expect_end();
       ast_ = std::make_unique<Instruction>(RegisterMachine::Jump, j);
     }
+    break;
+  case Lexer::kw_jne:
     break;
   case Lexer::kw_move:
     ast_ = parse_move();

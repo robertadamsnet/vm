@@ -5,7 +5,7 @@
     See LICENSE.txt for license information.
     */
 
-#include "rparser.hpp"
+#include "parser.hpp"
 #include "ast_dump.hpp"
 #include "assembler.hpp"
 #include <fstream>
@@ -23,7 +23,7 @@ try {
   int c;
   string input_filespec;
   string output_filespec;
-  RParser parser;
+  Parser parser;
   Assembler assembler;
   bool flag_execute = true;
   bool flag_compile = true;
@@ -55,7 +55,7 @@ try {
       unsigned line_count = 0;
       while(ifs.good()) {
         string line;
-        auto get_line = [&] () -> RParser::string_t {
+        auto get_line = [&] () -> Parser::string_t {
           ++line_count; 
           string l;
           getline(ifs, l);
@@ -80,7 +80,7 @@ try {
     };
 
     inner();
-    RegisterMachine machine;
+    StackMachine machine;
     machine.execute(assembler.code());
     cout << endl;
   };

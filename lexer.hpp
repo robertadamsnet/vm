@@ -20,6 +20,7 @@ public:
     kw_dump,
     kw_hex_dump,
     kw_jump,
+    kw_jne,
     kw_move,
     TOKEN_MAX
   };
@@ -40,6 +41,9 @@ public:
 
   auto symbol() const -> string_t;
 
+  template<class T>
+  auto symbol_as() const -> T;
+
 private:
   const string_t*      source_p_;
   Token                token_     = tk_start;
@@ -48,6 +52,12 @@ private:
 
   auto inner_scan() -> Token;
 };
+
+template<class T>
+auto Lexer::symbol_as() const -> T 
+{
+  return boost::lexical_cast<T>(symbol());
+}
 
 inline
 void Lexer::reset()
@@ -128,6 +138,9 @@ auto Lexer::inner_scan() -> Token
     }
     if(sym == "jump") {
       return kw_jump;
+    }
+    if(sym == "jne") {
+      return kw_jne;
     }
     if(sym == "move") {
       return kw_move;

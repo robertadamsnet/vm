@@ -6,8 +6,8 @@
 
 class RegisterMachine final : virtual public Machine {
 public:
-  typedef uint8_t register_id_t;
-  static constexpr register_id_t register_id_max = std::numeric_limits<register_id_t>::max();
+  typedef uint8_t op_param_t;
+  static constexpr op_param_t register_id_max = std::numeric_limits<op_param_t>::max();
   enum Op {
     Move,
     Add,
@@ -27,16 +27,19 @@ public:
     Stack
   };
 
-  union move_instr_t {
+  union register_instr_t {
     word_t word;
     struct record_t {
-      uint32_t  op;
-      register_id_t   source;
-      register_id_t   target;  
-      register_id_t   p1;
-      register_id_t   p2;
+      uint32_t        op;
+      op_param_t      source;
+      op_param_t      target;  
+      op_param_t      source_reg; 
+      op_param_t      target_reg;
     } record;
   };
+
+  typedef register_instr_t move_instr_t;
+  typedef register_instr_t add_instr_t;
 
   RegisterMachine();
 
@@ -56,16 +59,20 @@ RegisterMachine::RegisterMachine() {
   reg_.fill(0);
 }
 
+#include "terminal.hpp"
+
 void RegisterMachine::do_dump() const {
+  Terminal::move(0,0);
   using namespace std;
   auto dump_registers = [&] {
+    
     unsigned r = 0;
     while(r < register_id_max) {
       constexpr unsigned registers_per_line = 16;
       if(!(r % registers_per_line)) {
-        cout << endl;
+        Terminal::cout() << "\n";
       }
-      cout << hex << reg_[r] << " ";
+      Terminal::cout() << hex << reg_[r] << " ";
       ++r;
     }
   };
@@ -107,8 +114,8 @@ void RegisterMachine::v_execute(const code_t& code) {
   auto get_source = [&] {
     switch(instr.record.source) {
     case Register:
-      // set source pointer to register indicated by p1
-      return reg_[instr.record.p1];
+      // set source pointer to register indicated by.source_reg
+      return reg_[instr.record.source_reg];
     case Code:
       get_word();
       return word;
@@ -122,23 +129,28 @@ void RegisterMachine::v_execute(const code_t& code) {
   };
 
   auto do_move = [&] {
-    reg_[instr.record.p2] = get_source();
+    reg_[instr.record.target_reg] = get_source();
   };
 
   auto do_add = [&] {
-    reg_[instr.record.p2] += get_source();
+    reg_[instr.record.target_reg] += get_source();
   };
 
   auto do_sub = [&] {
-    reg_[instr.record.p2] -= get_source();
+    reg_[instr.record.target_reg] -= get_source();
   };
 
   auto do_mul = [&] {
-    reg_[instr.record.p2] *= get_source();
+    reg_[instr.record.target_reg] *= get_source();
   };
 
   auto do_div = [&] {
-    reg_[instr.record.p2] /= get_source();
+    reg_[instr.record.target_reg] /= get_source();
+  };
+
+  auto do_jump = [&] {
+    get_word();
+    ip = begin + word;
   };
 
   while(in_bounds()) {
@@ -161,6 +173,9 @@ void RegisterMachine::v_execute(const code_t& code) {
       break;
     case Op::Dump:
       do_dump();
+      break;
+    case Op::Jump:
+      do_jump();
       break;
     }
   }

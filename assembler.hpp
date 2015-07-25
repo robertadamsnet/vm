@@ -3,8 +3,6 @@
 
 #include "ast.hpp"
 
-#include "errors.hpp"
-
 #include "machine.hpp"
 
 class Assembler final  : public Host {

@@ -95,10 +95,13 @@ void Parser::parse(const string_t& s, std::function<string_t()> reload_fn)
       ast_ = std::make_unique<Instruction>(StackMachine::jump_, j);
     }
     break;
+  case Lexer::kw_jne:
+    {
   case Lexer::kw_hex_dump:
     expect_end();
     ast_ = std::make_unique<Instruction>(StackMachine::hex_dump_);
     break;
+
   default:
     {
       string_t msg;
