@@ -49,7 +49,7 @@ void StackMachine::v_execute(const code_t& code)
   bool halt = false;
 
   auto instruction_in_bounds = [&] {
-    return (instr_p > 0) && (instr_p < code.size());
+    return instr_p < code.size();
   };
 
   auto fetch = [&] () -> word_t {
@@ -88,7 +88,6 @@ void StackMachine::v_execute(const code_t& code)
 
   auto add = [&] 
   {
-
     auto op2 = pop();
     auto op1 = pop();
     push(op1 + op2);
@@ -116,11 +115,22 @@ void StackMachine::v_execute(const code_t& code)
     push(op1 / op2);
   };
 
-  auto jump = [&]
+  auto jump = [&](auto word)
   {
-    instr_p = pop();
-    if(instr_p >= code.size()) {
-      halt = true;
+    instr_p = word;
+  };
+
+  auto jump_if_equal = [&] (auto word, auto address) {
+
+  };
+
+  auto hex_dump = [&]
+  {
+    using namespace std;
+    size_t count = 0;
+    for(const auto& i : stack_) {
+      cout << /*hex <<*/ count << ":" << i << "\n";
+      ++count;
     }
   };
 
@@ -128,8 +138,7 @@ void StackMachine::v_execute(const code_t& code)
     auto op = fetch();
     switch(op) {
     case terminate_:
-      halt = true;
-      break;
+      return false;
     case dump_:
       dump(stack_);
       break;
@@ -155,17 +164,25 @@ void StackMachine::v_execute(const code_t& code)
       div();
       break;
     case jump_:
-      jump();
+      {
+        auto addr = fetch();
+        jump(addr);
+      }
       break;
     case noop_:
+      break;
+    case hex_dump_:
+      hex_dump();
       break;
     default:
       break;
     };
+    return true;
   };
 
-  while(halt == false) {
-    identify_instruction();
+  while(instruction_in_bounds()) {
+    if(!identify_instruction())
+      break;
   }
 }
 
