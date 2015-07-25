@@ -4,7 +4,7 @@
 #include <vector>
 #include <iostream>
 
-typedef unsigned int word_t;
+typedef uint64_t word_t;
 typedef std::vector<word_t> segment_t;
 
 typedef segment_t stack_t;
