@@ -14,7 +14,8 @@ public:
     div_,
     push_s_,
     jump_,
-    noop_
+    noop_,
+    hex_dump_
   };
 private:
   void v_execute(const code_t&) override;
